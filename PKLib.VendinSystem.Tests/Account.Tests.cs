@@ -8,7 +8,7 @@ namespace PKLib.VendinSystem.Tests
     [TestClass]
    public class AccountTest
     {
-        Account _accountObj;
+        IAccount _accountObj;
         [TestInitialize]
         public void Setup()
         {
@@ -29,7 +29,7 @@ namespace PKLib.VendinSystem.Tests
         }
 
         [TestMethod]
-        public void Account_Will_Be_Deducted_If_There_Is_InSufficient_Balance()
+        public void Account_Will_Not_Be_Deducted_If_There_Is_InSufficient_Balance()
         {
             _accountObj = new Account(12345, 0.2f);
             Assert.AreEqual(-1, _accountObj.WithDrawAmount(0.5f));

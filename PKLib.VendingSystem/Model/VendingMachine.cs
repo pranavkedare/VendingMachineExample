@@ -1,21 +1,25 @@
-﻿using System;
+﻿using PKLib.VendingSystem.Exceptions;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PKLib.VendingSystem.Model
 {
     //Instance of vending machine
-    public sealed class VendingMachine
+    public  class VendingMachine : IVendingMachine
     {
         #region Member variables
         //As we load up vending machine from top down, LIFO.
         private Stack<VendingItem> _inventory;
         private const int systemCapacity = 25;
-        private readonly Account _machineAccount;
+        private readonly IAccount _machineAccount;
+        private ICardAuthority _cardAuthority;
 
-        public static int SystemCapacity => systemCapacity;
+        //System capacity constant.
+        public static  int SystemCapacity => systemCapacity;
+
+       
+        
+
         #endregion
 
         /// <summary>
@@ -30,9 +34,39 @@ namespace PKLib.VendingSystem.Model
         /// Init machine account
         /// </summary>
         /// <param name="machineAccount"></param>
-        public VendingMachine(Account machineAccount):this() //Akso call default constructor
+        public VendingMachine(IAccount machineAccount,ICardAuthority cardAuthority):
+            this() //Also call default constructor
         {
             _machineAccount = machineAccount;
+            _cardAuthority = cardAuthority;
+        }
+
+        /// <summary>
+        /// Returns current inventory count
+        /// </summary>
+        /// <returns></returns>
+        public int InventoryCount
+        {
+            get
+            {
+                return _inventory.Count;
+            }
+        }
+
+        public float CurrentItemAmount
+        {
+            get
+            {
+                try
+                {
+                    var item = _inventory.Peek(); //If the following operation fails then the inventory is empty.
+                    return item.Price;
+                }
+                catch (InvalidOperationException)
+                {
+                    throw new EmptyMachineException("Vending machine is out of stock, please try later");
+                }
+            }
         }
 
         /// <summary>
@@ -46,7 +80,7 @@ namespace PKLib.VendingSystem.Model
             {
                 foreach (var item in items)
                 {
-                    if (GetInventoryCount() < systemCapacity)
+                    if (InventoryCount< systemCapacity)
                     {
                         _inventory.Push(item);
                     }
@@ -73,40 +107,26 @@ namespace PKLib.VendingSystem.Model
             }
             catch(InvalidOperationException e)
             {
-                Console.WriteLine("Machine has run out of Cans, please come back later.");
-                return null;
+                throw new EmptyMachineException("Vending machine is out of stock, please try later");
+                
 
             }
 
             
         }
 
-        public void CreditAmount(float transactionAmount)
+        /// <summary>
+        /// Once the user card is debited, the vending account should get credited.
+        /// </summary>
+        /// <param name="transactionAmount"></param>
+        public void CreditVendingAmount(float transactionAmount)
         {
             _machineAccount.DepositAmount(transactionAmount);
         }
 
-        /// <summary>
-        /// Returns current inventory count
-        /// </summary>
-        /// <returns></returns>
-        public int GetInventoryCount()
+        public ICard FindCard(string cardNumber)
         {
-            return _inventory.Count;
+            return _cardAuthority.FindCard(cardNumber);
         }
-
-        public float? GetCurrentItemAmount()
-        {
-           try
-            {
-                var item = _inventory.Peek(); //If the following operation fails then the inventory is empty.
-                return item.Price;
-            }
-            catch(InvalidOperationException e)
-            {
-                return null;
-            }
-        }
-
     }
 }

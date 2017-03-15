@@ -1,12 +1,12 @@
-﻿using System;
+﻿using PKLib.VendingSystem.Exceptions;
 
 namespace PKLib.VendingSystem.Model
 {
-    public class CashCard
+    public class CashCard : ICard
     {
         private uint _pin;
         private string _cardNum;
-        private Account _cardAccount;
+        private IAccount _cardAccount;
 
         #region Properties
         public string CardProtectedNumber => _cardNum.Substring(12);
@@ -17,21 +17,40 @@ namespace PKLib.VendingSystem.Model
         /// <param name="cardNum"></param>
         /// <param name="pin"></param>
         /// <param name="cardAccount"></param>
-        public CashCard(string cardNum, uint pin, Account cardAccount)
+        public CashCard(string cardNum, uint defaultPin, Account cardAccount):this(cardNum,defaultPin)
         {
-            _pin = pin;
-            _cardNum = cardNum;
             _cardAccount = cardAccount;
         }
 
-        public bool ValidateCard(uint pin)
+        public CashCard(string cardNum, uint defaultPin)
         {
-            return pin == _pin;
+            _pin = defaultPin;
+            _cardNum = cardNum;
+        }
+
+        public bool ValidatePin(uint pin)
+        {
+            if (pin != _pin)
+                throw new InvalidPinException("Input pin is invalid!!");
+            else
+                return true;
         }
 
         public bool DebitAmount(float transactionAmount)
         {
             return _cardAccount.WithDrawAmount(transactionAmount) != -1; //sufficient cash condition
         }
+
+        public void SetPin(uint pin)
+        {
+            _pin = pin;
+        }
+
+        public void LinkAccount(IAccount account)
+        {
+            _cardAccount = account;
+        }
+
+      
     }
 }

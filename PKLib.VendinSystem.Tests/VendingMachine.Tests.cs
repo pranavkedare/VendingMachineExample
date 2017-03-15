@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using PKLib.VendingSystem.Exceptions;
 using PKLib.VendingSystem.Model;
 using System.Collections.Generic;
 
@@ -7,7 +8,7 @@ namespace PKLib.VendingSystem.Tests
     [TestClass]
     public class VendingMachineTest
     {
-        VendingMachine _machine;
+        IVendingMachine _machine;
 
         [TestInitialize]
         public void Setup()
@@ -18,16 +19,16 @@ namespace PKLib.VendingSystem.Tests
         [TestMethod]
         public void No_Inventory_At_Start_Up()
         {
-            Assert.AreEqual(0, _machine.GetInventoryCount());
+            Assert.AreEqual(0, _machine.InventoryCount);
         }
 
         [TestMethod]
         public void Inventory_Can_Only_Filled_Upto_Capacity()
         {
-            Assert.IsTrue(0 == _machine.GetInventoryCount());
+            Assert.IsTrue(0 == _machine.InventoryCount);
             AddSomeItemsToInventory();
 
-            Assert.IsTrue(_machine.GetInventoryCount() == VendingMachine.SystemCapacity);
+            Assert.IsTrue(_machine.InventoryCount== VendingMachine.SystemCapacity);
         }
 
         private void AddSomeItemsToInventory()
@@ -44,14 +45,15 @@ namespace PKLib.VendingSystem.Tests
         [TestMethod]
         public void Inventory_Will_Not_Vend_AnyThing_If_Empty()
         {
-            Assert.IsTrue(0 == _machine.GetInventoryCount());
+            Assert.IsTrue(0 == _machine.InventoryCount);
+            Assert.ThrowsException<EmptyMachineException>(()=>_machine.CurrentItemAmount);
             Assert.IsNull(_machine.VendIt());
         }
 
         [TestMethod]
         public void Inventory_Will_Vend_AnyThing_If_Not_Empty()
         {
-            Assert.IsTrue(0 == _machine.GetInventoryCount());
+            Assert.IsTrue(0 == _machine.InventoryCount);
             AddSomeItemsToInventory();
             Assert.IsNotNull(_machine.VendIt());
         }

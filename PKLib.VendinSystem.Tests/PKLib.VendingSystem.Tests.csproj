@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Account.Tests.cs" />
+    <Compile Include="Card.Tests.cs" />
     <Compile Include="VendingMachine.Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -44,8 +44,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Exceptions\EmptyMachineException.cs" />
+    <Compile Include="Exceptions\InsufficientFundsException.cs" />
+    <Compile Include="Exceptions\InvalidPinException.cs" />
     <Compile Include="Model\Account.cs" />
+    <Compile Include="Model\CardAuthority.cs" />
     <Compile Include="Model\CashCard.cs" />
+    <Compile Include="Model\IAccount.cs" />
+    <Compile Include="Model\ICard.cs" />
+    <Compile Include="Model\ICardAuthority.cs" />
+    <Compile Include="Model\IVendingMachine.cs" />
     <Compile Include="Model\VendingItem.cs" />
     <Compile Include="Model\VendingMachine.cs" />
     <Compile Include="VendingSystemExample.cs" />

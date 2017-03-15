@@ -6,128 +6,111 @@ namespace PKLib.VendingSystem
 {
     public class VendingSystemExample
     {
+        static IVendingMachine _vendingMachineInstance;
         static void Main(string[] args)
         {
+            ICardAuthority cardAuthority = new CardAuthority();
+            IAccount vendingMachineAccount = new Account(54321, 0);
+            _vendingMachineInstance = new VendingMachine(vendingMachineAccount, cardAuthority);
 
-            VendingMachine vendingMachine=null;
-            var vendingMachineAccount = new Account(54321, 0);
-            BootUpVendingMachine(ref vendingMachine, vendingMachineAccount);
+            BootUpVendingMachine();//Adding items to vending machine
 
+            UserCardRegistration(cardAuthority); //registering joint cards to same account
 
+            Console.WriteLine("===========================");
+            Console.WriteLine("Welcome to vending system");
+            Console.WriteLine("===========================");
+
+            Console.Write("Insert card and enter card number: "); //It is just a simulation of card recognition.
+            var result = Console.ReadLine();
+            Transact(result);
+
+           
+        }
+
+        private static void UserCardRegistration(ICardAuthority cardAuthority)
+        {
             //The same object will be used for two cards so we are creating a scenario of a joint card.
             var userCardAccount = new Account(123456, 25.5f);
 
-            var cashCard1 = new CashCard("1234567891011123",4534,userCardAccount);
+            //Card number should be ideally 16 digits but for card recognition simulation, 
+            //we will make it four digits card.
+            //Card 1
+            cardAuthority.RegisterCard("4512");
+            var cashCard1 = cardAuthority.FindCard("4512");
 
-            var cashCard2 = new CashCard("1312111098765432", 4534, userCardAccount);
-            bool _canRepeat=false;
-            do
-            {
-               int userChoice = DisplayMenu();
+            cashCard1.SetPin(2535);
+            cashCard1.LinkAccount(userCardAccount); //Registering same account to both cards.
 
-                switch (userChoice)
-                {
-                    case 1:
-                        Console.WriteLine("Machine has {0} cans", vendingMachine.GetInventoryCount());
-                        _canRepeat = true;
-                        break;
-                    case 2:
-                        _canRepeat = Transact(ref vendingMachine, ref cashCard1, _canRepeat);
-                        break;
-                    case 3:
-                        _canRepeat = Transact(ref vendingMachine, ref cashCard2, _canRepeat);
-                        break;
-                    case 4:
-                        _canRepeat = false;
-                        break;
-                    default:
-                        _canRepeat = true;
-                        Console.Write("Invalid input");
-                        break;
-                }
+            //Card 1
+            cardAuthority.RegisterCard("4513");
+            var cashCard2 = cardAuthority.FindCard("4513");
 
-            } while (_canRepeat);
+            cashCard2.SetPin(2535);
+            cashCard2.LinkAccount(userCardAccount);
+
+            
         }
 
-        private static bool Transact(ref VendingMachine vendingMachine, ref CashCard cashCard, bool _canRepeat)
+        private static void Transact(string cardNumber)
         {
-            Console.WriteLine("Please Enter Pin for Card ending with {0}", cashCard.CardProtectedNumber);
-            var input = Console.ReadLine();
-            uint inputPin;
-            if (UInt32.TryParse(input, out inputPin))
+            try
             {
-                if (!cashCard.ValidateCard(inputPin))
-                {
-                    Console.WriteLine("Incorrect Pin!!");
-                    _canRepeat = true;
-                }
-                else //Pin is correct.
-                {
-                    if (vendingMachine.GetInventoryCount() != 0)
-                    {
-                        //1.Deduct the amount from the card.
-                        //2.Get the item amount
-                        if (vendingMachine.GetCurrentItemAmount().HasValue &&
-                            cashCard.DebitAmount(vendingMachine.GetCurrentItemAmount().Value))
-                        {
-                            var transAmount = vendingMachine.GetCurrentItemAmount().Value;
-                            //3.Credit Vending machine account
-                            vendingMachine.CreditAmount(transAmount);
-                            //4. Serve the item out.
-                            var item = vendingMachine.VendIt();
-                            Console.WriteLine("Your card ending with {0} has been deducted with {1}",
-                                cashCard.CardProtectedNumber, transAmount);
-                            Console.WriteLine("Please collect your {0}", item.Name);
-                            _canRepeat = true;
-                        }
-                        else
-                        {
-                            Console.WriteLine("Insufficient funds on your account,please check.");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Machine is empty, please try later");
-                    }
-                }
 
+
+                var transactionAmount = _vendingMachineInstance.CurrentItemAmount;
+                Console.WriteLine("Card inserted");
+                var cardToTransact = _vendingMachineInstance.FindCard(cardNumber);
+                Console.Write("Please enter Pin: ");
+                var input = Console.ReadLine();
+                uint inputPin;
+                if (UInt32.TryParse(input, out inputPin))
+                {
+                    if (cardToTransact.ValidatePin(inputPin)) //Pin is correct
+                    {
+
+                        //1.Deduct the amount from users' card.
+
+                        if (!cardToTransact.DebitAmount(transactionAmount))
+                            throw new InsufficientExecutionStackException("Insufficient funds on your account.");
+
+                        //2.Credit Vending machine account
+                        _vendingMachineInstance.CreditVendingAmount(transactionAmount);
+
+                        //3. Serve the vending item out.
+                        var item = _vendingMachineInstance.VendIt();
+                        Console.WriteLine("Your card has been deducted with {0}", transactionAmount);
+                        Console.WriteLine("Please collect your {0}.Thank you", item.Name);
+
+
+                    }
+
+                }
             }
-
-            return _canRepeat;
+            catch(Exception exception)
+            {
+                Console.WriteLine(exception.Message);
+                Console.WriteLine("Please start again.");
+               
+            }
+            Console.Read();
         }
 
         /// <summary>
-        /// 1. Init Vending machine.
-        /// 2. Set the account to operate/
-        /// 3. Add initial inventory.
+        ///  Add initial inventory.
         /// </summary>
-        /// <param name="machine"></param>
-        /// <param name="machineAccount"></param>
-        private static void BootUpVendingMachine(ref VendingMachine machine,Account machineAccount)
-        {
-            machine = new VendingMachine(machineAccount);
+        
+        private static void BootUpVendingMachine()
+        { 
 
             List<VendingItem> items = new List<VendingItem>();
             for(int iVar = 1; iVar <= VendingMachine.SystemCapacity; iVar++)
             {
                 items.Add(new VendingItem { Name = string.Format("Can {0}", iVar), Price = 0.5f });
             }
-            machine.AddInventory(items);
+            _vendingMachineInstance.AddInventory(items);
         }
 
-        static public int DisplayMenu()
-        {
-            Console.WriteLine();
-            Console.WriteLine("Vending system");
-            Console.WriteLine();
-            Console.WriteLine("1. Check Vending machine stock count");
-            Console.WriteLine("2. Use Card 1 for a Can");
-            Console.WriteLine("3. Use Card 2 for a Can");
-            Console.WriteLine("4. Exit");
-            var result = Console.ReadLine();
-            int parseInt=-1;
-             Int32.TryParse(result,out parseInt);
-            return parseInt;
-        }
+       
     }
 }
