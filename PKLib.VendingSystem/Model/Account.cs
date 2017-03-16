@@ -7,8 +7,8 @@ namespace PKLib.VendingSystem.Model
         #region Variables
         private uint _accountNumber;
         private float _balance;
-        //  static readonly object _object = new object(); //If required to test this approach, uncomment it.
-        private static int usingTransactionSrc = 0;
+          static readonly object _object = new object();
+        //private static int usingTransactionSrc = 0;//If required to test this approach, uncomment it.
         #endregion
 
         #region Properties
@@ -43,10 +43,10 @@ namespace PKLib.VendingSystem.Model
             {
 
 
-                //   Monitor.Enter(_object); //If required to test this approach, uncomment it.
+                   Monitor.Enter(_object); //If required to test this approach, uncomment it.
                 //We can also use SpinLock but operations within the following methods are non blocking.
-                //So Interlocked is chosen.
-                if (Interlocked.Exchange(ref usingTransactionSrc, 1) == 0)
+                //So Interlocked can be chosen.
+               // if (Interlocked.Exchange(ref usingTransactionSrc, 1) == 0)
                 {
                     if (_balance >= transactionAmount)
                     {
@@ -60,8 +60,8 @@ namespace PKLib.VendingSystem.Model
                 }
             }
             finally
-            { //Monitor.Exit(_object); //If required to test this approach, uncomment it.
-                Interlocked.Exchange(ref usingTransactionSrc, 0);
+            { Monitor.Exit(_object); //If required to test this approach, uncomment it.
+             //   Interlocked.Exchange(ref usingTransactionSrc, 0);
             }
 
                 return -1; //If account has insufficient balance the following value will be served.
@@ -76,7 +76,8 @@ namespace PKLib.VendingSystem.Model
         {
             try
             {
-                if (Interlocked.Exchange(ref usingTransactionSrc, 1) == 0)
+                Monitor.Enter(_object);
+                // if (Interlocked.Exchange(ref usingTransactionSrc, 1) == 0)
                 {
                     _balance += transactionAmount;
                 }
@@ -84,7 +85,8 @@ namespace PKLib.VendingSystem.Model
             }
             finally
             {
-                Interlocked.Exchange(ref usingTransactionSrc, 0);
+                // Interlocked.Exchange(ref usingTransactionSrc, 0);
+                Monitor.Exit(_object);
             }
         }
 

@@ -47,7 +47,6 @@ namespace PKLib.VendingSystem.Tests
         {
             Assert.IsTrue(0 == _machine.InventoryCount);
             Assert.ThrowsException<EmptyMachineException>(()=>_machine.CurrentItemAmount);
-            Assert.IsNull(_machine.VendIt());
         }
 
         [TestMethod]
