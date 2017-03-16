@@ -1,5 +1,5 @@
 # VendingMachineExample
-Simple Vending machine Example with TDD and multi-threading Tests
+Simple Vending machine Example with TDD and multi-threaded Tests
 
 IVendingMachine - Vending machine interface
 ICardAuthority - Card Authority that stores card information
